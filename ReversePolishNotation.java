@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.Stack;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author caiguihao
@@ -9,7 +10,7 @@ import java.util.Stack;
 
 public class ReversePolishNotation {
     private String infixExpression = "";
-    double result = 0;
+    private double result = 0;
     private StringBuffer reservedPolishNotation;
     private String fileName = "input";
 
@@ -18,27 +19,36 @@ public class ReversePolishNotation {
         notation.write(3);
         notation.read();
 
-
-
     }
-    public void write(int numOfExpressions) {
+
+    /**
+     * Write specific number of expressions into the file indicated by fileName
+     * @param numOfExpressions Specify the number of expressions
+     */
+    private void write(int numOfExpressions) {
         try {
             FileWriter file = new FileWriter(fileName);
             BufferedWriter bufferWriter = new BufferedWriter(file);
-            BinaryTree tree = new BinaryTree(4);
-            StringBuffer sample = new StringBuffer(tree.getRandromExpression());
-            bufferWriter.write(sample.toString());
-            sample.setLength(0);
+            for (int i = 0; i < numOfExpressions; i++) {
+                int numberOfOperands = ThreadLocalRandom.current().nextInt(1, 10);
+                BinaryTree tree = new BinaryTree(numberOfOperands);
+                StringBuilder sample = new StringBuilder(tree.getRandomExpressions());
+                bufferWriter.write(sample.toString());
+                bufferWriter.newLine();
+                sample.setLength(0);
+            }
             bufferWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-
-
     }
 
-    public void read() {
+    /**
+     * This method reads the expressions stored in the file line by line,
+     * then converts them to RPN, calculate and show the result.
+     */
+    private void read() {
         try {
             FileReader file = new FileReader(fileName);
             BufferedReader bufferedReader = new BufferedReader(file);
@@ -57,8 +67,12 @@ public class ReversePolishNotation {
         }
     }
 
-    public void convert() {
-        Stack<Character> operatorStack = new Stack<Character>();
+    /**
+     * This method convert infixExpression to RPN,
+     * and update the property reservedPolishNotation
+     */
+    private void convert() {
+        Stack<Character> operatorStack = new Stack<>();
         reservedPolishNotation = new StringBuffer();
         Character currentChar, first = infixExpression.charAt(0);
         int start = 0;
@@ -132,16 +146,14 @@ public class ReversePolishNotation {
      * @param currentChar current char in the infix expression
      * @return true if the current char is operator; false if it is not operator
      */
-    public boolean isOperator(Character currentChar) {
-        boolean flag = false;
+    private boolean isOperator(Character currentChar) {
         String operators = "+-*/";
         for (char current: operators.toCharArray()) {
             if (current == currentChar) {
-                flag = true;
-                return flag;
+                return true;
             }
         }
-        return flag;
+        return false;
     }
 
     /**
@@ -150,21 +162,23 @@ public class ReversePolishNotation {
      * @param topOfStack operator on the top of stack
      * @return true if currentOperator is with higher precedence; otherwise, false
      */
-    public boolean precedenceCmp(Character currentOperator, Character topOfStack) {
-        boolean precedence = false;
-        if (topOfStack == '(') {
-            precedence = true;
-        } else if (currentOperator == '*' || currentOperator == '/') {
+    private boolean precedenceCmp(Character currentOperator, Character topOfStack) {
+        if (topOfStack == '(') return true;
+        else if (currentOperator == '*' || currentOperator == '/') {
             if (topOfStack != '*' || topOfStack != '/') {
-                precedence = true;
+                return true;
             }
         }
-        return precedence;
+        return false;
     }
 
-    public void calculation() {
-        double first = 0.0, second = 0.0;
-        StringBuffer number = new StringBuffer();
+    /**
+     * This method calculates the reservedPolishNotation,
+     * and print out the result.
+     */
+    private void calculation() {
+        double first, second;
+        StringBuilder number = new StringBuilder();
         Stack<Double> calculationStack = new Stack<>();
 
         result = 0;
@@ -190,9 +204,9 @@ public class ReversePolishNotation {
                 number.setLength(0);
                 i -= 1;
             } else if (isOperator(current)) {
-                first = calculationStack.peek();
-                calculationStack.pop();
                 second = calculationStack.peek();
+                calculationStack.pop();
+                first = calculationStack.peek();
                 calculationStack.pop();
 
                 switch (current) {

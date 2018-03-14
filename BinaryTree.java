@@ -11,18 +11,30 @@ class TreeNode {
 }
 
 public class BinaryTree {
-    TreeNode root;
-    StringBuffer infixExpression = new StringBuffer();
+    private TreeNode root;
+    private StringBuffer infixExpression = new StringBuffer();
 
+    /**
+     * Initialize an expression tree
+     * @param numOfOperands indicate the number of operands
+     */
     public BinaryTree(int numOfOperands) {
         buildTree(numOfOperands);
     }
 
-    public String getRandromExpression() {
+    /**
+     * This generate a random infix expression.
+     * @return generated infix expression.
+     */
+    public String getRandomExpressions() {
         buildExpression(root);
         return infixExpression.toString();
     }
 
+    /**
+     * Convert the expression tree to a StringBuffer variable infixExpression
+     * @param current indicates the current tree node
+     */
     private void buildExpression(TreeNode current) {
         if (current.left == null && current.right == null) {
             infixExpression.append(String.format("%.2f", Double.parseDouble(current.key)));
@@ -35,31 +47,37 @@ public class BinaryTree {
         infixExpression.append(')');
     }
 
-
+    /**
+     * This method generates a expression tree which consists of specific number of operands
+     * @param numOfOperands indicate the number of the operands
+     */
     private void buildTree(int numOfOperands) {
-        String operators = "+-*/";
-        int randomIndex = ThreadLocalRandom.current().nextInt(0, 3);
-        root = new TreeNode(""+operators.charAt(randomIndex));
+        if (numOfOperands == 1) {
+            root = buildSubTree(1);
+        } else {
+            String operators = "+-*/";
+            int randomIndex = ThreadLocalRandom.current().nextInt(0, 3);
+            root = new TreeNode(""+operators.charAt(randomIndex));
 
-        double result = numOfOperands/2.0;
-        int left = (int) Math.ceil(result);
-        int right = (int) Math.floor(result);
+            double result = numOfOperands/2.0;
+            int left = (int) Math.ceil(result);
+            int right = (int) Math.floor(result);
 
-        root.left = buildSubTree(left);
-        root.right = buildSubTree(right);
+            root.left = buildSubTree(left);
+            root.right = buildSubTree(right);
+        }
     }
 
     /**
      * Use recursive method to generate subtree
-     * @param numOfOperands
+     * @param numOfOperands indicates the number of operands
      * @return root node of a subtree
      */
 
     private TreeNode buildSubTree(int numOfOperands) {
         if (numOfOperands == 1) {
             double random = ThreadLocalRandom.current().nextDouble(-10, 10);
-            TreeNode operandNode = new TreeNode(Double.toString(random));
-            return operandNode;
+            return new TreeNode(Double.toString(random));
         }
         String operators = "+-*/";
         int randomIndex = ThreadLocalRandom.current().nextInt(0, 3);
