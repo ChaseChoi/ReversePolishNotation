@@ -1,6 +1,9 @@
 import java.io.*;
 import java.util.Stack;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.script.*;
 
 /**
  * @author caiguihao
@@ -8,6 +11,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * @since 2018-03-10
  */
 
+/**
+ * 1st command line arg: number of expressions
+ * 2st command line arg: 0 invalid; 1 valid
+ */
 public class ReversePolishNotation {
     private String infixExpression = "";
     private double result = 0;
@@ -16,23 +23,41 @@ public class ReversePolishNotation {
 
     public static void main(String[] args) {
         ReversePolishNotation notation = new ReversePolishNotation();
-        notation.write(3);
+        int numOfExpression = Integer.parseInt(args[0]);
+        int valid = Integer.parseInt(args[1]);
+        notation.write(numOfExpression, valid);
         notation.read();
-
     }
 
     /**
      * Write specific number of expressions into the file indicated by fileName
      * @param numOfExpressions Specify the number of expressions
+     * @param valid 0 means invalid; 1 means valid
      */
-    private void write(int numOfExpressions) {
+    private void write(int numOfExpressions, int valid) {
         try {
             FileWriter file = new FileWriter(fileName);
             BufferedWriter bufferWriter = new BufferedWriter(file);
+            String numbers = "0123456789.";
+            String operators = "+-*/()";
+            StringBuilder sample;
             for (int i = 0; i < numOfExpressions; i++) {
                 int numberOfOperands = ThreadLocalRandom.current().nextInt(1, 10);
-                BinaryTree tree = new BinaryTree(numberOfOperands);
-                StringBuilder sample = new StringBuilder(tree.getRandomExpressions());
+                if (valid == 1) {
+                    BinaryTree tree = new BinaryTree(numberOfOperands);
+                    sample = new StringBuilder(tree.getRandomExpressions());
+                } else {
+
+                    sample = new StringBuilder();
+                    for (int j = 0; j < numberOfOperands; j++) {
+                        int opPosition = ThreadLocalRandom.current().nextInt(0, 6);
+                        int numPosition = ThreadLocalRandom.current().nextInt(0, 11);
+                        sample.append(numbers.charAt(numPosition));
+                        sample.append(operators.charAt(opPosition));
+                    }
+
+                }
+
                 bufferWriter.write(sample.toString());
                 bufferWriter.newLine();
                 sample.setLength(0);
@@ -57,8 +82,10 @@ public class ReversePolishNotation {
             while ((line = bufferedReader.readLine()) != null) {
                 // remove whitespace
                 infixExpression = line.replaceAll("\\s+", "");
-                System.out.println(infixExpression+"\nRPN:");
-                convert();
+                System.out.println(infixExpression);
+                if (isValid()) {
+                    convert();
+                }
             }
             bufferedReader.close();
 
@@ -136,8 +163,8 @@ public class ReversePolishNotation {
             operatorStack.pop();
         }
         // output rpn
-        System.out.println(reservedPolishNotation);
-        calculation();
+        System.out.println("RPN: "+reservedPolishNotation+"\n");
+//        calculation();
     }
 
     /**
@@ -239,5 +266,38 @@ public class ReversePolishNotation {
         System.out.println("result: "+String.format("%.2f", result));
         calculationStack.empty();
 
+    }
+
+
+    /**
+     * This method determines if the infixExpression is valid
+     * @return true, when infixExpression is valid; false, when invalid
+     */
+    public boolean isValid(){
+        String expression = infixExpression;
+        Pattern arithmeticExp, parenthesisPattern;
+        arithmeticExp = Pattern.compile("\\s*-?\\d+(.\\d+)?(\\s*[-+*/]\\s*-?\\d+(.\\d+)?)*\\s*");
+        parenthesisPattern = Pattern.compile("[(]([^()]*)[)]");
+        int count = 1;
+        while (expression.contains("(") || expression.contains(")") ) {
+            Matcher m = parenthesisPattern.matcher(expression);
+            if (m.find()) {
+                if (!arithmeticExp.matcher(m.group(1)).matches()) {
+                    System.out.println("第"+count+"组括号表达式错误!");
+                    return false;
+                }
+                expression = expression.substring(0, m.start()) + "1" + expression.substring(m.end());
+                count += 1;
+            } else {
+                System.out.println("第"+count+"组括号不匹配!");
+                return false;
+            }
+        }
+       if (!arithmeticExp.matcher(expression).matches() ) {
+           System.out.println("第"+count+"组括号表达式错误!");
+           return false;
+       } else {
+            return true;
+       }
     }
 }
